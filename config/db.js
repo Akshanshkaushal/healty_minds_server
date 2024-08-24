@@ -1,19 +1,22 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const mongoose = require("mongoose");
 
-dotenv.config();
+const Connection = async (username, password) => {
+    const URL = `mongodb+srv://${username}:${password}@cluster0.p3i96.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+    const options = {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000, // Increased timeout to 30 seconds
+        socketTimeoutMS: 60000, // Increased socket timeout to 60 seconds
+        bufferCommands: false, // Disable Mongoose's internal buffering
+        autoIndex: true, // Auto-indexing for performance improvement
+    };
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB Connected');
-  } catch (error) {
-    console.error(error.message);
-    process.exit(1);
-  }
+    try {
+        await mongoose.connect(URL, options);
+        console.log('Database Connected Successfully');
+    } catch (error) {
+        console.error('Database Connection Error: ', error.message);
+    }
 };
 
-module.exports = connectDB;
+module.exports = Connection;
