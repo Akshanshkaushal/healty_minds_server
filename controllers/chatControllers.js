@@ -193,6 +193,59 @@ const addToGroup = asyncHandler(async (req, res) => {
   }
 });
 
+
+// @desc    Join a chat room
+// @route   PUT /api/chat/join
+// @access  Protected
+const joinChatRoom = asyncHandler(async (req, res) => {
+  const { chatId } = req.body;
+
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Not authorized, no token");
+  }
+
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat Room Not Found");
+  }
+
+  if (!chat.users.includes(req.user._id)) {
+    chat.users.push(req.user._id);
+    await chat.save();
+  }
+
+  res.status(200).json(chat);
+});
+
+//@description     Fetch all group chats for a user
+//@route           GET /api/chat/groups
+//@access          Protected
+const fetchGroups = asyncHandler(async (req, res) => {
+  try {
+    const groups = await Chat.find({
+      isGroupChat: true,
+    })
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password")
+      .populate("latestMessage")
+      .sort({ updatedAt: -1 });
+
+    const populatedGroups = await User.populate(groups, {
+      path: "latestMessage.sender",
+      select: "name pic email",
+    });
+
+    res.status(200).json(populatedGroups);
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+
 module.exports = {
   accessChat,
   fetchChats,
@@ -200,4 +253,6 @@ module.exports = {
   renameGroup,
   addToGroup,
   removeFromGroup,
+  joinChatRoom,
+  fetchGroups
 };
